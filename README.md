@@ -1,2 +1,2 @@
-# Brick_breaker
-brick breaker game 
+# Brick breaker
+brick breaker game made with react
