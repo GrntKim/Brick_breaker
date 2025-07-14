@@ -17,32 +17,91 @@ const useCanvas = () => {
 function App() {
   const { canvasRef, getCanvasContext, getCanvas } = useCanvas();
 
-  const drawBall = (x, y) => {
-    const ctx = getCanvasContext();
-    if (!ctx) return;
-
-    ctx.beginPath();
-    ctx.arc(x, y, 10, 0, 2 * Math.PI);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-    ctx.closePath();
-  }
-
   useEffect(() => {
     const canvas = getCanvas();
-    let x = canvas.width / 2;
-    let y = canvas.height / 2;
     const ctx = getCanvasContext();
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBall(x, y);
+    if (!canvas || !ctx) return;
 
-    const animate = () => {
+    let ballRadius = 10;
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+    let dx = 2;
+    let dy = -2;
+    let animationId;
+
+    const paddleWidth = 75;
+    const paddleHeight = 10;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+    let leftPressed = false;
+    let rightPressed = false;
+
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft')
+        leftPressed = true;
+      else if (e.key === 'ArrowRight')
+        rightPressed = true;
+    }
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'ArrowLeft')
+        leftPressed = false;
+      else if (e.key === 'ArrowRight')
+        rightPressed = false;
+    }
+
+    const drawBall = (ctx, x, y, ballRadius) => {
+
+      ctx.beginPath();
+      ctx.arc(x, y, ballRadius, 0, 2 * Math.PI);
+      ctx.fillStyle = 'blue';
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    const drawBar = (ctx, x, y, paddleWidth, paddleHeight) => {
+      ctx.beginPath();
+      ctx.rect(x, y, paddleWidth, paddleHeight);
+      ctx.fillStyle = 'blue';
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    const mainLoop = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawBall(x, y);
-      requestAnimationFrame(animate);
+      drawBall(ctx, ballX, ballY, ballRadius);
+      drawBar(ctx, paddleX, canvas.height - paddleHeight - 10, paddleWidth, paddleHeight);
+
+      if (leftPressed && paddleX > 0) 
+        paddleX -= 7;
+      if (rightPressed && paddleX + paddleWidth < canvas.width) 
+        paddleX += 7;
+
+      if (ballX + dx < ballRadius || ballX + dx > canvas.width - ballRadius) {
+        dx = -dx;
+      }
+      if (ballY + dy < ballRadius || ballY + dy > canvas.height - ballRadius) {
+        dy = -dy;
+      }
+
+      ballX += dx;
+      ballY += dy;
+      animationId = requestAnimationFrame(mainLoop);
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    mainLoop();
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
     };
-    animate();
+
   }, []);
 
   return (
